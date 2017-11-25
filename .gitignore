@@ -17,3 +17,6 @@
 moc*
 rcc*
 deploy
+
+# file to hold api keys and secrets
+*.toml

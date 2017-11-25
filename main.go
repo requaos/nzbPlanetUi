@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/labstack/gommon/log"
+	sabnzbd "github.com/michaeltrobinson/go-sabnzbd"
+	"github.com/spf13/viper"
 	"github.com/therecipe/qt/core"
 	"github.com/therecipe/qt/gui"
 	"github.com/therecipe/qt/quick"
@@ -22,11 +24,6 @@ func main() {
 
 	var model = NewPersonModel(nil)
 
-	var p = NewPerson(nil)
-	p.SetDescription("john")
-	p.SetDate("doe")
-	model.SetPeople([]*Person{p})
-
 	view.RootContext().SetContextProperty("PersonModel", model)
 
 	view.SetSource(core.NewQUrl3("qrc:/qml/main.qml", 0))
@@ -35,9 +32,11 @@ func main() {
 	view.SetWidth(800)
 	view.Show()
 
+	settings := getSettings()
+
 	go func() {
 
-		searchList := SearchForHSnzbs("[HorribleSubs] 720p", "157b4974da310d1f834644fe93298171")
+		searchList := SearchForHSnzbs("[HorribleSubs] 720p", settings)
 
 		//add person
 		for i := 0; i < len(searchList.Channel.Item); i++ {
@@ -114,9 +113,9 @@ type SearchResponse struct {
 }
 
 //SearchForHSnzbs is the initial athentication call
-func SearchForHSnzbs(search string, apiKey string) SearchResponse {
+func SearchForHSnzbs(search string, settings map[string]string) SearchResponse {
 	client := &http.Client{}
-	u, _ := url.ParseRequestURI("https://api.nzbplanet.net")
+	u, _ := url.ParseRequestURI(settings["nzbSite"])
 	u.Path = "/api"
 	restpost := u.Query()
 	restpost.Add("apikey", apiKey)
@@ -142,4 +141,47 @@ func SearchForHSnzbs(search string, apiKey string) SearchResponse {
 		panic(err)
 	}
 	return b
+}
+
+func UploadNZBtoClient(dlID string, settings map[string]string) {
+	u, _ := url.ParseRequestURI(settings["nzbSite"])
+	u.Path = "/api"
+	restpost := u.Query()
+	restpost.Add("id", dlID)
+	restpost.Add("apikey", settings["nzbKey"])
+	restpost.Set("t", "get")
+	u.RawQuery = restpost.Encode()
+	resturl := fmt.Sprintf("%v", u)
+	s, err := sabnzbd.New(sabnzbd.Addr(settings["sabSite"]), sabnzbd.ApikeyAuth(settings["sabKey"]))
+	if err != nil {
+		log.Fatalln("couldn't create sabnzbd:", err)
+	}
+	auth, err := s.Auth()
+	if err != nil {
+		log.Fatalln("couldn't get auth type:", err)
+	}
+	if auth != "apikey" {
+		log.Fatalln("sabnzbd instance must be using apikey authentication")
+	}
+	_, err = s.AddURL(sabnzbd.AddNzbUrl(resturl))
+	if err != nil {
+		log.Fatalln("failed to upload nzb", err)
+	}
+}
+
+func getSettings() map[string]string {
+	// example file: secrets.toml
+	// [settings]
+	// nzbSite = "https://api.nzbplanet.net"
+	// nzbKey = "157b4974da310d1f834644fe93298171"
+	// sabSite = "localhost:8080"
+	// sabKey = "6a1c4e43be73e58c2c2617043c72b8de"
+	viper.SetConfigName("secrets")
+	viper.AddConfigPath("./")
+	err := viper.ReadInConfig()
+	if err != nil {
+		fmt.Println("Config file not found...")
+		panic(err)
+	}
+	return viper.GetStringMapString("settings")
 }
