@@ -1,11 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"net/url"
-
-	"github.com/labstack/gommon/log"
-	sabnzbd "github.com/michaeltrobinson/go-sabnzbd"
 	"github.com/therecipe/qt/core"
 )
 
@@ -101,32 +96,6 @@ func (m *PersonModel) columnCount(parent *core.QModelIndex) int {
 
 func (m *PersonModel) roleNames() map[int]*core.QByteArray {
 	return m.Roles()
-}
-
-func (m *PersonModel) UploadNZBtoClient(dlID, apiKey string) {
-	u, _ := url.ParseRequestURI("https://api.nzbplanet.net")
-	u.Path = "/api"
-	restpost := u.Query()
-	restpost.Add("id", dlID)
-	restpost.Add("apikey", apiKey)
-	restpost.Set("t", "get")
-	u.RawQuery = restpost.Encode()
-	resturl := fmt.Sprintf("%v", u)
-	s, err := sabnzbd.New(sabnzbd.Addr("localhost:8080"), sabnzbd.ApikeyAuth("6a1c4e43be73e58c2c2617043c72b8de"))
-	if err != nil {
-		log.Errorf("couldn't create sabnzbd: %s", err.Error())
-	}
-	auth, err := s.Auth()
-	if err != nil {
-		log.Errorf("couldn't get auth type: %s", err.Error())
-	}
-	if auth != "apikey" {
-		log.Errorf("sabnzbd instance must be using apikey authentication")
-	}
-	_, err = s.AddURL(sabnzbd.AddNzbUrl(resturl))
-	if err != nil {
-		log.Errorf("failed to upload nzb %s", err.Error())
-	}
 }
 
 func (m *PersonModel) addPerson(p *Person) {

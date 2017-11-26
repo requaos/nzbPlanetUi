@@ -10,12 +10,13 @@ import (
 	"time"
 
 	"github.com/labstack/gommon/log"
-	sabnzbd "github.com/michaeltrobinson/go-sabnzbd"
 	"github.com/spf13/viper"
 	"github.com/therecipe/qt/core"
 	"github.com/therecipe/qt/gui"
 	"github.com/therecipe/qt/quick"
 )
+
+var Settings = getSettings()
 
 func main() {
 	gui.NewQGuiApplication(len(os.Args), os.Args)
@@ -23,20 +24,27 @@ func main() {
 	var view = quick.NewQQuickView(nil)
 
 	var model = NewPersonModel(nil)
+	var qmlBridge = NewQmlBridge(nil)
+	qmlBridge.ConnectSendToGo(func(data string) string {
+		return uploadNZBtoClient(data)
+	})
+	qmlBridge.ConnectResetList(func(model *PersonModel) {
+		RefreshList(model)
+	})
 
+	view.RootContext().SetContextProperty("QmlBridge", qmlBridge)
 	view.RootContext().SetContextProperty("PersonModel", model)
 
 	view.SetSource(core.NewQUrl3("qrc:/qml/main.qml", 0))
+	view.SetTitle("HorribleSubs NZB Search")
 	view.SetResizeMode(quick.QQuickView__SizeRootObjectToView)
 	view.SetHeight(600)
 	view.SetWidth(800)
 	view.Show()
 
-	settings := getSettings()
-
 	go func() {
 
-		searchList := SearchForHSnzbs("[HorribleSubs] 720p", settings)
+		searchList := SearchForHSnzbs("[HorribleSubs] 720p", Settings)
 
 		//add person
 		for i := 0; i < len(searchList.Channel.Item); i++ {
@@ -61,6 +69,28 @@ func main() {
 	}()
 
 	gui.QGuiApplication_Exec()
+}
+
+func RefreshList(model *PersonModel) {
+	model.BeginResetModel()
+	model.SetPeople([]*Person{NewPerson(nil)})
+	model.EndResetModel()
+	model.RemovePerson(0)
+
+	searchList := SearchForHSnzbs("[HorribleSubs] 720p", Settings)
+
+	//add person
+	for i := 0; i < len(searchList.Channel.Item); i++ {
+		publishedDate, err := time.Parse("Mon, 02 Jan 2006 15:04:05 -0700", searchList.Channel.Item[i].PubDate)
+		if err != nil {
+			log.Error("Error parsing time/date stamp on item")
+		}
+		var p = NewPerson(nil)
+		p.SetDescription(searchList.Channel.Item[i].Title)
+		p.SetDate(publishedDate.Format("01/02/2006"))
+		p.SetId(searchList.Channel.Item[i].GUID[34:])
+		model.AddPerson(p)
+	}
 }
 
 type SearchResponse struct {
@@ -115,10 +145,10 @@ type SearchResponse struct {
 //SearchForHSnzbs is the initial athentication call
 func SearchForHSnzbs(search string, settings map[string]string) SearchResponse {
 	client := &http.Client{}
-	u, _ := url.ParseRequestURI(settings["nzbSite"])
+	u, _ := url.ParseRequestURI(settings["nzbsite"])
 	u.Path = "/api"
 	restpost := u.Query()
-	restpost.Add("apikey", apiKey)
+	restpost.Add("apikey", settings["nzbkey"])
 	restpost.Set("o", "json")
 	restpost.Add("q", search)
 	restpost.Set("t", "search")
@@ -143,32 +173,6 @@ func SearchForHSnzbs(search string, settings map[string]string) SearchResponse {
 	return b
 }
 
-func UploadNZBtoClient(dlID string, settings map[string]string) {
-	u, _ := url.ParseRequestURI(settings["nzbSite"])
-	u.Path = "/api"
-	restpost := u.Query()
-	restpost.Add("id", dlID)
-	restpost.Add("apikey", settings["nzbKey"])
-	restpost.Set("t", "get")
-	u.RawQuery = restpost.Encode()
-	resturl := fmt.Sprintf("%v", u)
-	s, err := sabnzbd.New(sabnzbd.Addr(settings["sabSite"]), sabnzbd.ApikeyAuth(settings["sabKey"]))
-	if err != nil {
-		log.Fatalln("couldn't create sabnzbd:", err)
-	}
-	auth, err := s.Auth()
-	if err != nil {
-		log.Fatalln("couldn't get auth type:", err)
-	}
-	if auth != "apikey" {
-		log.Fatalln("sabnzbd instance must be using apikey authentication")
-	}
-	_, err = s.AddURL(sabnzbd.AddNzbUrl(resturl))
-	if err != nil {
-		log.Fatalln("failed to upload nzb", err)
-	}
-}
-
 func getSettings() map[string]string {
 	// example file: secrets.toml
 	// [settings]
@@ -183,5 +187,9 @@ func getSettings() map[string]string {
 		fmt.Println("Config file not found...")
 		panic(err)
 	}
-	return viper.GetStringMapString("settings")
+	settings := viper.GetStringMapString("settings")
+	// for i, x := range settings {
+	// 	fmt.Printf("Key/Value: %s/%s", i, x)
+	// }
+	return settings
 }
