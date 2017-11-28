@@ -20,3 +20,6 @@ deploy
 
 # file to hold api keys and secrets
 *.toml
+
+# Windows resource binaries generated with windres
+*.syso

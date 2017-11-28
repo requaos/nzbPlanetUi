@@ -12,8 +12,8 @@ import (
 type QmlBridge struct {
 	core.QObject
 
-	_ func(data string) string `slot:"sendToGo"`
-	_ func(model *PersonModel) `slot:"resetList"`
+	_ func(data string) string                `slot:"sendToGo"`
+	_ func(model *PersonModel, search string) `slot:"resetList"`
 }
 
 func uploadNZBtoClient(dlID string) string {

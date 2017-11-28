@@ -28,56 +28,33 @@ func main() {
 	qmlBridge.ConnectSendToGo(func(data string) string {
 		return uploadNZBtoClient(data)
 	})
-	qmlBridge.ConnectResetList(func(model *PersonModel) {
-		RefreshList(model)
+	qmlBridge.ConnectResetList(func(model *PersonModel, search string) {
+		go RefreshList(model, search)
 	})
 
 	view.RootContext().SetContextProperty("QmlBridge", qmlBridge)
 	view.RootContext().SetContextProperty("PersonModel", model)
 
 	view.SetSource(core.NewQUrl3("qrc:/qml/main.qml", 0))
-	view.SetTitle("HorribleSubs NZB Search")
+	view.SetTitle("sabNZB Search")
 	view.SetResizeMode(quick.QQuickView__SizeRootObjectToView)
-	view.SetHeight(600)
-	view.SetWidth(800)
+	view.SetHeight(800)
+	view.SetMinimumHeight(100)
+	view.SetWidth(600)
+	view.SetMaximumWidth(1024)
+	view.SetMinimumWidth(400)
 	view.Show()
-
-	go func() {
-
-		searchList := SearchForHSnzbs("[HorribleSubs] 720p", Settings)
-
-		//add person
-		for i := 0; i < len(searchList.Channel.Item); i++ {
-			publishedDate, err := time.Parse("Mon, 02 Jan 2006 15:04:05 -0700", searchList.Channel.Item[i].PubDate)
-			if err != nil {
-				log.Error("Error parsing time/date stamp on item")
-			}
-			var p = NewPerson(nil)
-			p.SetDescription(searchList.Channel.Item[i].Title)
-			p.SetDate(publishedDate.Format("01/02/2006"))
-			p.SetId(searchList.Channel.Item[i].GUID[34:])
-			model.AddPerson(p)
-		}
-
-		//edit person
-		// model.EditPerson(1, "bob", "", "1234")
-		// model.EditPerson(3, "", "john", "4321")
-
-		//remove person
-		// model.RemovePerson(2)
-
-	}()
 
 	gui.QGuiApplication_Exec()
 }
 
-func RefreshList(model *PersonModel) {
+func RefreshList(model *PersonModel, search string) {
 	model.BeginResetModel()
 	model.SetPeople([]*Person{NewPerson(nil)})
 	model.EndResetModel()
 	model.RemovePerson(0)
 
-	searchList := SearchForHSnzbs("[HorribleSubs] 720p", Settings)
+	searchList := SearchForHSnzbs(search, Settings)
 
 	//add person
 	for i := 0; i < len(searchList.Channel.Item); i++ {
