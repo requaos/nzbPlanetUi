@@ -71,9 +71,4 @@ func setSettings(nzbSite string, nzbKey string, sabSite string, sabKey string) {
 			log.Infof("Error writing settings batch to DB...%s", err.Error())
 		}
 	}
-	settingsDB.Release()
-	err = settingsDB.Error()
-	if err != nil {
-		log.Infof("Error reading settings from the DB...%s", err.Error())
-	}
 }
