@@ -12,6 +12,11 @@ import (
 type QmlBridge struct {
 	core.QObject
 
+	_ string `property:"nzbSite"`
+	_ string `property:"nzbKey"`
+	_ string `property:"sabSite"`
+	_ string `property:"sabKey"`
+
 	_ func(data string) string                                           `slot:"sendToGo"`
 	_ func(searchModel *SearchModel, search string)                      `slot:"resetList"`
 	_ func(queueModel *QueueModel)                                       `slot:"queueList"`
@@ -44,4 +49,16 @@ func uploadNZBtoClient(dlID string) string {
 		return "Error!"
 	}
 	return "Downloading..."
+}
+
+func LoadSettings(b *QmlBridge) {
+	for _, x := range []string{"sabsite", "sabkey", "nzbsite", "nzbkey"} {
+		if _, ok := Settings[x]; !ok {
+			return
+		}
+	}
+	b.SetNzbKey(Settings["nzbkey"])
+	b.SetNzbSite(Settings["nzbsite"])
+	b.SetSabKey(Settings["sabkey"])
+	b.SetSabSite(Settings["sabsite"])
 }
