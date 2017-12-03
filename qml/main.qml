@@ -203,10 +203,83 @@ ApplicationWindow {
                 width: swipeView.width
                 height: swipeView.height
                 Column {
-                    anchors.centerIn: parent
-                    RadioButton { text: qsTr("Male") }
-                    RadioButton { text: qsTr("Female");  checked: true }
-                    RadioButton { text: qsTr("Other") }
+                    topPadding: parent.height * 0.2
+                    width: parent.width
+                        TextField {
+                            height: 30
+                            width: parent.width * 0.7
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            id: nzbsite
+                            text: QmlBridge.nzbSite
+                        }
+                        Label {
+                            height: 60
+                            width: parent.width * 0.3
+                            anchors.topMargin: -30
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: "nzbPlanet API Address"
+                        }
+                        TextField {
+                            height: 30
+                            width: parent.width * 0.7
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            id: nzbkey
+                            text: QmlBridge.nzbKey
+                        }
+                        Label {
+                            height: 60
+                            width: parent.width * 0.3
+                            anchors.topMargin: -30
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: "nzbPlanet API Key"
+                        }
+                        TextField {
+                            height: 30
+                            width: parent.width * 0.7
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            id: sabsite
+                            text: QmlBridge.sabSite
+                        }
+                        Label {
+                            height: 60
+                            width: parent.width * 0.3
+                            anchors.topMargin: -30
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: "SABnzbd API Address"
+                        }
+                        TextField {
+                            height: 30
+                            width: parent.width * 0.7
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            id: sabkey
+                            text: QmlBridge.sabKey
+                        }
+                        Label {
+                            height: 60
+                            width: parent.width * 0.3
+                            anchors.topMargin: -30
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: "SABnzbd API Key"
+                        }
+                        Rectangle {
+                            id: saveButton
+                            width: parent.width * 0.5
+                            height: parent.height * 0.1
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            color: "purple"
+                            Text {
+                                anchors.centerIn: parent
+                                text: "Save"
+                                color: "white"
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                onPressed: saveButton.color = "darkmagenta"
+                                onReleased: saveButton.color = "purple"
+                                onClicked: QmlBridge.saveSettings(nzbsite.text, nzbkey.text, sabsite.text, sabkey.text)
+                            }
+                        }
+
                 }
             }
         }
