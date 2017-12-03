@@ -1,9 +1,12 @@
 package main
 
 import (
-	"github.com/labstack/gommon/log"
+	"fmt"
+	"time"
+
+	"github.com/asdine/storm"
+	"github.com/boltdb/bolt"
 	"github.com/spf13/viper"
-	"github.com/syndtr/goleveldb/leveldb"
 )
 
 func getSettings() map[string]string {
@@ -17,35 +20,22 @@ func getSettings() map[string]string {
 	viper.AddConfigPath("./")
 	err := viper.ReadInConfig()
 	if err != nil {
-		log.Infof("Config file not found...%s", err.Error())
+		fmt.Printf("Config file not found...%s", err.Error())
 	}
 	settingsFile := viper.GetStringMapString("settings")
-	db, err := leveldb.OpenFile("my.db", nil)
+	db, err := storm.Open("my.db", storm.BoltOptions(0600, &bolt.Options{Timeout: 1 * time.Second}))
 	if err != nil {
-		log.Infof("Error opening DB...%s", err.Error())
+		fmt.Printf("Error opening DB...%s", err.Error())
 	}
 	defer db.Close()
 	if len(settingsFile) > 0 {
-		batch := new(leveldb.Batch)
-		for i, x := range settingsFile {
-			batch.Put([]byte(i), []byte(x))
-		}
-		err = db.Write(batch, nil)
-		if err != nil {
-			log.Infof("Error writing settings batch to DB...%s", err.Error())
-		}
+		db.Set("settings", "set", settingsFile)
 	}
-	settingsDB := db.NewIterator(nil, nil)
 	var settings map[string]string
-	for settingsDB.Next() {
-		settings[string(settingsDB.Key())] = string(settingsDB.Value())
+	db.Get("settings", "set", settings)
+	for i, x := range settings {
+		fmt.Printf("Key: % 9s Value: %s", i, x)
 	}
-	settingsDB.Release()
-	err = settingsDB.Error()
-	if err != nil {
-		log.Infof("Error reading settings from the DB...%s", err.Error())
-	}
-
 	return settings
 }
 
@@ -56,19 +46,13 @@ func setSettings(nzbSite string, nzbKey string, sabSite string, sabKey string) {
 		"sabsite": sabSite,
 		"sabkey":  sabKey,
 	}
-	db, err := leveldb.OpenFile("my.db", nil)
+	db, err := storm.Open("my.db", storm.BoltOptions(0600, &bolt.Options{Timeout: 1 * time.Second}))
 	if err != nil {
-		log.Infof("Error opening DB...%s", err.Error())
+		fmt.Printf("Error opening DB...%s", err.Error())
 	}
 	defer db.Close()
 	if len(settingsFile) > 0 {
-		batch := new(leveldb.Batch)
-		for i, x := range settingsFile {
-			batch.Put([]byte(i), []byte(x))
-		}
-		err = db.Write(batch, nil)
-		if err != nil {
-			log.Infof("Error writing settings batch to DB...%s", err.Error())
-		}
+		db.Set("settings", "set", settingsFile)
 	}
+	Settings = settingsFile
 }
