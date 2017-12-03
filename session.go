@@ -6,6 +6,12 @@ import (
 )
 
 func SABnzbdSession() *sabnzbd.Sabnzbd {
+	if _, ok := Settings["sabsite"]; !ok {
+		return nil
+	}
+	if _, ok := Settings["sabkey"]; !ok {
+		return nil
+	}
 	s, err := sabnzbd.New(sabnzbd.Addr(Settings["sabsite"]), sabnzbd.ApikeyAuth(Settings["sabkey"]))
 	if err != nil {
 		log.Fatalf("couldn't create sabnzbd: %s", err.Error())
@@ -21,4 +27,5 @@ func SABnzbdSession() *sabnzbd.Sabnzbd {
 		return nil
 	}
 	return s
+
 }

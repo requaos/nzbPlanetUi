@@ -123,12 +123,13 @@ ApplicationWindow {
                         Rectangle {
                             anchors.right: parent.right
                             width: 48
+                            radius: 8
                             color: "steelblue"
-                            anchors.rightMargin: 1
+                            anchors.rightMargin: -2
                             anchors.bottom: parent.bottom
-                            anchors.bottomMargin: 1
+                            anchors.bottomMargin: -2
                             anchors.top: parent.top
-                            anchors.topMargin: 1
+                            anchors.topMargin: -2
                             z: 1
                             Text {
                                 id: searchButtonText

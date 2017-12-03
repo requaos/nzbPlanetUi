@@ -12,19 +12,25 @@ import (
 type QmlBridge struct {
 	core.QObject
 
-	_ func(data string) string                      `slot:"sendToGo"`
-	_ func(searchModel *SearchModel, search string) `slot:"resetList"`
-	_ func(queueModel *QueueModel)                  `slot:"queueList"`
+	_ func(data string) string                                           `slot:"sendToGo"`
+	_ func(searchModel *SearchModel, search string)                      `slot:"resetList"`
+	_ func(queueModel *QueueModel)                                       `slot:"queueList"`
+	_ func(nzbSite string, nzbKey string, sabSite string, sabKey string) `slot:"saveSettings"`
 }
 
 func uploadNZBtoClient(dlID string) string {
+	if _, ok := Settings["nzbsite"]; !ok {
+		return "Check Settings"
+	}
+	if _, ok := Settings["nzbkey"]; !ok {
+		return "Check Settings"
+	}
 	fmt.Printf("Sending NZB to sabNZB: %s\n", dlID)
-	settings := Settings
-	u, _ := url.ParseRequestURI(settings["nzbsite"])
+	u, _ := url.ParseRequestURI(Settings["nzbsite"])
 	u.Path = "/api"
 	restpost := u.Query()
 	restpost.Add("id", dlID)
-	restpost.Add("apikey", settings["nzbkey"])
+	restpost.Add("apikey", Settings["nzbkey"])
 	restpost.Set("t", "get")
 	u.RawQuery = restpost.Encode()
 	resturl := fmt.Sprintf("%v", u)

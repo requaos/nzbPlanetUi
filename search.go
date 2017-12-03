@@ -17,7 +17,7 @@ func RefreshList(model *SearchModel, search string) {
 	model.EndResetModel()
 	model.RemoveSearch(0)
 
-	searchList := SearchForHSnzbs(search, Settings)
+	searchList := SearchForHSnzbs(search)
 
 	//add Search
 	for i := 0; i < len(searchList.Channel.Item); i++ {
@@ -83,12 +83,19 @@ type SearchResponse struct {
 }
 
 //SearchForHSnzbs is the initial athentication call
-func SearchForHSnzbs(search string, settings map[string]string) SearchResponse {
+func SearchForHSnzbs(search string) SearchResponse {
+	var b SearchResponse
+	if _, ok := Settings["nzbsite"]; !ok {
+		return b
+	}
+	if _, ok := Settings["nzbkey"]; !ok {
+		return b
+	}
 	client := &http.Client{}
-	u, _ := url.ParseRequestURI(settings["nzbsite"])
+	u, _ := url.ParseRequestURI(Settings["nzbsite"])
 	u.Path = "/api"
 	restpost := u.Query()
-	restpost.Add("apikey", settings["nzbkey"])
+	restpost.Add("apikey", Settings["nzbkey"])
 	restpost.Set("o", "json")
 	restpost.Add("q", search)
 	restpost.Set("t", "search")
@@ -105,7 +112,6 @@ func SearchForHSnzbs(search string, settings map[string]string) SearchResponse {
 	if err != nil {
 		panic(err)
 	}
-	var b SearchResponse
 	err = json.Unmarshal(body, &b)
 	if err != nil {
 		panic(err)

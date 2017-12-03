@@ -29,6 +29,9 @@ func main() {
 	qmlBridge.ConnectQueueList(func(queueModel *QueueModel) {
 		go GetQueueDetails(queueModel)
 	})
+	qmlBridge.ConnectSaveSettings(func(nzbSite string, nzbKey string, sabSite string, sabKey string) {
+		go setSettings(nzbSite, nzbKey, sabSite, sabKey)
+	})
 	go LoopLoadQueue(queueModel)
 
 	var app = qml.NewQQmlApplicationEngine(nil)
