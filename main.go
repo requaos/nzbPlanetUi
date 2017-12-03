@@ -32,6 +32,18 @@ func main() {
 	qmlBridge.ConnectSaveSettings(func(nzbSite string, nzbKey string, sabSite string, sabKey string) {
 		go setSettings(nzbSite, nzbKey, sabSite, sabKey)
 	})
+	qmlBridge.ConnectNzbSite(func() string {
+		return Settings["nzbsite"]
+	})
+	qmlBridge.ConnectNzbKey(func() string {
+		return Settings["nzbkey"]
+	})
+	qmlBridge.ConnectSabSite(func() string {
+		return Settings["sabsite"]
+	})
+	qmlBridge.ConnectSabKey(func() string {
+		return Settings["sabkey"]
+	})
 	go LoopLoadQueue(queueModel)
 
 	var app = qml.NewQQmlApplicationEngine(nil)
@@ -40,6 +52,7 @@ func main() {
 	app.RootContext().SetContextProperty("QmlBridge", qmlBridge)
 	app.RootContext().SetContextProperty("SearchModel", searchModel)
 	app.RootContext().SetContextProperty("QueueModel", queueModel)
+	LoadSettings(qmlBridge)
 
 	gui.QGuiApplication_Exec()
 }
