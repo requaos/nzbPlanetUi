@@ -11,25 +11,25 @@ import (
 	"github.com/labstack/gommon/log"
 )
 
-func RefreshList(model *PersonModel, search string) {
+func RefreshList(model *SearchModel, search string) {
 	model.BeginResetModel()
-	model.SetPeople([]*Person{NewPerson(nil)})
+	model.SetRows([]*Search{NewSearch(nil)})
 	model.EndResetModel()
-	model.RemovePerson(0)
+	model.RemoveSearch(0)
 
 	searchList := SearchForHSnzbs(search, Settings)
 
-	//add person
+	//add Search
 	for i := 0; i < len(searchList.Channel.Item); i++ {
 		publishedDate, err := time.Parse("Mon, 02 Jan 2006 15:04:05 -0700", searchList.Channel.Item[i].PubDate)
 		if err != nil {
 			log.Error("Error parsing time/date stamp on item")
 		}
-		var p = NewPerson(nil)
+		var p = NewSearch(nil)
 		p.SetDescription(searchList.Channel.Item[i].Title)
 		p.SetDate(publishedDate.Format("01/02/2006"))
 		p.SetId(searchList.Channel.Item[i].GUID[34:])
-		model.AddPerson(p)
+		model.AddSearch(p)
 	}
 }
 

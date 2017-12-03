@@ -10,20 +10,20 @@ const (
 	ID
 )
 
-type PersonModel struct {
+type SearchModel struct {
 	core.QAbstractListModel
 
 	_ func() `constructor:"init"`
 
 	_ map[int]*core.QByteArray `property:"roles"`
-	_ []*Person                `property:"people"`
+	_ []*Search                `property:"rows"`
 
-	_ func(*Person)                               `slot:"addPerson"`
-	_ func(row int, date, description, id string) `slot:"editPerson"`
-	_ func(row int)                               `slot:"removePerson"`
+	_ func(*Search)                               `slot:"addSearch"`
+	_ func(row int, date, description, id string) `slot:"editSearch"`
+	_ func(row int)                               `slot:"removeSearch"`
 }
 
-type Person struct {
+type Search struct {
 	core.QObject
 
 	_ string `property:"description"`
@@ -32,10 +32,10 @@ type Person struct {
 }
 
 func init() {
-	Person_QRegisterMetaType()
+	Search_QRegisterMetaType()
 }
 
-func (m *PersonModel) init() {
+func (m *SearchModel) init() {
 	m.SetRoles(map[int]*core.QByteArray{
 		Description: core.NewQByteArray2("description", len("description")),
 		Date:        core.NewQByteArray2("date", len("date")),
@@ -47,21 +47,21 @@ func (m *PersonModel) init() {
 	m.ConnectColumnCount(m.columnCount)
 	m.ConnectRoleNames(m.roleNames)
 
-	m.ConnectAddPerson(m.addPerson)
-	m.ConnectEditPerson(m.editPerson)
-	m.ConnectRemovePerson(m.removePerson)
+	m.ConnectAddSearch(m.addSearch)
+	m.ConnectEditSearch(m.editSearch)
+	m.ConnectRemoveSearch(m.removeSearch)
 }
 
-func (m *PersonModel) data(index *core.QModelIndex, role int) *core.QVariant {
+func (m *SearchModel) data(index *core.QModelIndex, role int) *core.QVariant {
 	if !index.IsValid() {
 		return core.NewQVariant()
 	}
 
-	if index.Row() >= len(m.People()) {
+	if index.Row() >= len(m.Rows()) {
 		return core.NewQVariant()
 	}
 
-	var p = m.People()[index.Row()]
+	var p = m.Rows()[index.Row()]
 
 	switch role {
 	case Description:
@@ -86,26 +86,26 @@ func (m *PersonModel) data(index *core.QModelIndex, role int) *core.QVariant {
 	}
 }
 
-func (m *PersonModel) rowCount(parent *core.QModelIndex) int {
-	return len(m.People())
+func (m *SearchModel) rowCount(parent *core.QModelIndex) int {
+	return len(m.Rows())
 }
 
-func (m *PersonModel) columnCount(parent *core.QModelIndex) int {
-	return 1
+func (m *SearchModel) columnCount(parent *core.QModelIndex) int {
+	return 3
 }
 
-func (m *PersonModel) roleNames() map[int]*core.QByteArray {
+func (m *SearchModel) roleNames() map[int]*core.QByteArray {
 	return m.Roles()
 }
 
-func (m *PersonModel) addPerson(p *Person) {
-	m.BeginInsertRows(core.NewQModelIndex(), len(m.People()), len(m.People()))
-	m.SetPeople(append(m.People(), p))
+func (m *SearchModel) addSearch(p *Search) {
+	m.BeginInsertRows(core.NewQModelIndex(), len(m.Rows()), len(m.Rows()))
+	m.SetRows(append(m.Rows(), p))
 	m.EndInsertRows()
 }
 
-func (m *PersonModel) editPerson(row int, date string, description string, id string) {
-	var p = m.People()[row]
+func (m *SearchModel) editSearch(row int, date string, description string, id string) {
+	var p = m.Rows()[row]
 
 	if date != "" {
 		p.SetDate(date)
@@ -123,8 +123,8 @@ func (m *PersonModel) editPerson(row int, date string, description string, id st
 	m.DataChanged(pIndex, pIndex, []int{Description, Date, ID})
 }
 
-func (m *PersonModel) removePerson(row int) {
+func (m *SearchModel) removeSearch(row int) {
 	m.BeginRemoveRows(core.NewQModelIndex(), row, row)
-	m.SetPeople(append(m.People()[:row], m.People()[row+1:]...))
+	m.SetRows(append(m.Rows()[:row], m.Rows()[row+1:]...))
 	m.EndRemoveRows()
 }
