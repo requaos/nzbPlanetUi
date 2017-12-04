@@ -6,10 +6,10 @@ import (
 )
 
 func SABnzbdSession() *sabnzbd.Sabnzbd {
-	if _, ok := Settings["sabsite"]; !ok {
+	if s, ok := Settings["sabsite"]; !ok || s == "" {
 		return nil
 	}
-	if _, ok := Settings["sabkey"]; !ok {
+	if k, ok := Settings["sabkey"]; !ok || k == "" {
 		return nil
 	}
 	s, err := sabnzbd.New(sabnzbd.Addr(Settings["sabsite"]), sabnzbd.ApikeyAuth(Settings["sabkey"]))

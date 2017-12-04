@@ -2,7 +2,7 @@
 
 import QtQml 2.2
 import QtQuick 2.7
-import QtQuick.Controls 2.0
+import QtQuick.Controls 2.1
 import QtQuick.Controls.Material 2.0
 import QtQuick.Controls.Universal 2.0
 
@@ -97,7 +97,6 @@ ApplicationWindow {
                         radius: 8
                         border.color: "steelblue"
                         border.width: 1
-                        clip: true
                         TextInput {
                             id: searchInput
                             width: 158
@@ -122,8 +121,8 @@ ApplicationWindow {
 
                         Rectangle {
                             anchors.right: parent.right
-                            width: 48
-                            radius: 8
+                            width: 52
+                            radius: 10
                             color: "steelblue"
                             anchors.rightMargin: -2
                             anchors.bottom: parent.bottom
@@ -135,9 +134,8 @@ ApplicationWindow {
                                 id: searchButtonText
                                 text: " Search"
                                 z: 2
-                                verticalAlignment: Text.AlignVCenter
+                                anchors.centerIn: parent
                                 font.bold: false
-                                horizontalAlignment: Text.AlignHCenter
                                 color: "white"
                             }
                             MouseArea {
@@ -210,7 +208,13 @@ ApplicationWindow {
                             width: parent.width * 0.7
                             anchors.horizontalCenter: parent.horizontalCenter
                             id: nzbsite
-                            text: QmlBridge.nzbSite
+                            Connections {
+                                target: QmlBridge
+                                onNzbSite: {
+                                    nzbsite.text = data
+                                    console.log(data)
+                                }
+                            }
                         }
                         Label {
                             height: 60
@@ -224,7 +228,13 @@ ApplicationWindow {
                             width: parent.width * 0.7
                             anchors.horizontalCenter: parent.horizontalCenter
                             id: nzbkey
-                            text: QmlBridge.nzbKey
+                            Connections {
+                                target: QmlBridge
+                                onNzbKey: {
+                                    nzbkey.text = data
+                                    console.log(data)
+                                }
+                            }
                         }
                         Label {
                             height: 60
@@ -238,7 +248,13 @@ ApplicationWindow {
                             width: parent.width * 0.7
                             anchors.horizontalCenter: parent.horizontalCenter
                             id: sabsite
-                            text: QmlBridge.sabSite
+                            Connections {
+                                target: QmlBridge
+                                onSabSite: {
+                                    sabsite.text = data
+                                    console.log(data)
+                                }
+                            }
                         }
                         Label {
                             height: 60
@@ -252,7 +268,13 @@ ApplicationWindow {
                             width: parent.width * 0.7
                             anchors.horizontalCenter: parent.horizontalCenter
                             id: sabkey
-                            text: QmlBridge.sabKey
+                            Connections {
+                                target: QmlBridge
+                                onSabKey: {
+                                    sabkey.text = data
+                                    console.log(data)
+                                }
+                            }
                         }
                         Label {
                             height: 60
@@ -278,6 +300,13 @@ ApplicationWindow {
                                 onReleased: saveButton.color = "purple"
                                 onClicked: QmlBridge.saveSettings(nzbsite.text, nzbkey.text, sabsite.text, sabkey.text)
                             }
+                        }
+                        Connections {
+                            target: QmlBridge
+                            onNzbSite: nzbsite.text = data
+                            onNzbKey: nzbkey.text = data
+                            onSabSite: sabsite.text = data
+                            onSabKey: sabkey.text = data
                         }
 
                 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/boltdb/bolt"
 	"github.com/spf13/viper"
@@ -21,7 +22,6 @@ func getSettings() map[string]string {
 		fmt.Printf("Config file not found...%s", err.Error())
 	}
 	settingsFile := viper.GetStringMapString("settings")
-	fmt.Println(len(settingsFile))
 	if len(settingsFile) > 0 {
 		err = settingsToDB(settingsFile)
 		if err != nil {
@@ -29,7 +29,6 @@ func getSettings() map[string]string {
 		}
 	}
 	settings := settingsFromDB()
-	fmt.Println("Returning from getSettings()")
 	return settings
 }
 
@@ -48,17 +47,35 @@ func setSettings(nzbSite string, nzbKey string, sabSite string, sabKey string) {
 
 func settingsFromDB() map[string]string {
 	m := make(map[string]string)
+	newDB := false
+	if _, err := os.Stat("settings.db"); err != nil {
+		newDB = true
+	}
 	db, err := bolt.Open("settings.db", 0644, nil)
 	if err != nil {
 		fmt.Printf("Error opening DB...%s\n", err.Error())
 	}
 	defer db.Close()
+	if newDB {
+		err = db.Update(func(tx *bolt.Tx) error {
+			b, err := tx.CreateBucketIfNotExists([]byte("settings"))
+			if err != nil {
+				return fmt.Errorf("Bucket error: %s", err.Error())
+			}
+			for _, k := range []string{"nzbsite", "nzbkey", "sabsite", "sabkey"} {
+				err := b.Put([]byte(k), []byte(""))
+				if err != nil {
+					return fmt.Errorf("Error inserting key/value pair into DB bucket...%s", err.Error())
+				}
+			}
+			return nil
+		})
+	}
 	db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("settings"))
 		for _, x := range []string{"nzbsite", "nzbkey", "sabsite", "sabkey"} {
 			v := b.Get([]byte(x))
 			m[x] = string(v)
-			fmt.Println("Retrieving -> " + x + ": " + string(v))
 		}
 		return nil
 	})
@@ -73,7 +90,6 @@ func settingsToDB(m map[string]string) error {
 	}
 	defer db.Close()
 	err = db.Update(func(tx *bolt.Tx) error {
-		fmt.Println("inside DB update function")
 		b, err := tx.CreateBucketIfNotExists([]byte("settings"))
 		if err != nil {
 			return fmt.Errorf("Bucket error: %s", err.Error())
@@ -85,9 +101,7 @@ func settingsToDB(m map[string]string) error {
 				return fmt.Errorf("Error inserting key/value pair into DB bucket...%s", err.Error())
 			}
 		}
-		fmt.Println("exiting DB update function")
 		return nil
 	})
-	fmt.Println("exiting settingsToDB function")
 	return err
 }

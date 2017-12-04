@@ -85,10 +85,10 @@ type SearchResponse struct {
 //SearchForHSnzbs is the initial athentication call
 func SearchForHSnzbs(search string) SearchResponse {
 	var b SearchResponse
-	if _, ok := Settings["nzbsite"]; !ok {
+	if s, ok := Settings["nzbsite"]; !ok || s == "" {
 		return b
 	}
-	if _, ok := Settings["nzbkey"]; !ok {
+	if k, ok := Settings["nzbkey"]; !ok || k == "" {
 		return b
 	}
 	client := &http.Client{}
