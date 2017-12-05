@@ -4,12 +4,7 @@ go:
   - master
 sudo: required
 env:
-  - "PATH=/home/travis/gopath/bin:$PATH"
-  - "ANDROID=true"
-  - "QT_MXE=true"
-  - "QT_MXE_ARCH=amd64"
-  - "QT_MXE_STATIC=true"
-  - "QT_PKG_CONFIG=false"
+  - ANDROID=true QT_MXE=true QT_MXE_ARCH=amd64 QT_MXE_STATIC=true QT_PKG_CONFIG=false
 before_install:
   - go get -u -v github.com/therecipe/qt
   - sudo bash -x $GOPATH/src/github.com/therecipe/qt/internal/ci/linux.sh
@@ -25,8 +20,7 @@ before_deploy:
   
 deploy:
   provider: releases
-  api_key:
-    secure: $GITHUB_AUTH
+  api_key: $GITHUB_AUTH
   file_glob: true
   file:
     - ./deploy/windows/*.exe
