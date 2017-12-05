@@ -17,6 +17,8 @@
 moc*
 rcc*
 deploy
+linux
+android
 
 # file to hold api keys and secrets
 *.toml
