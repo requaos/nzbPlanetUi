@@ -1,0 +1,38 @@
+language: go
+
+go:
+  - master
+sudo: required
+env:
+  - "PATH=/home/travis/gopath/bin:$PATH"
+  - "ANDROID=true"
+  - "QT_MXE=true"
+  - "QT_MXE_ARCH=amd64"
+  - "QT_MXE_STATIC=true"
+  - "QT_PKG_CONFIG=false"
+before_install:
+  - go get -u -v github.com/therecipe/qt
+  - sudo bash -x $GOPATH/src/github.com/therecipe/qt/internal/ci/linux.sh
+  - go get -u -v github.com/therecipe/qt/cmd/...
+  - $GOPATH/bin/qtsetup full
+script:
+  - qtdeploy build windows
+  - qtdeploy build linux
+  - qtdeploy build android  
+
+before_deploy:
+  - tar -czf ./deploy/linux.tar.gz ./deploy/linux
+  
+deploy:
+  provider: releases
+  api_key:
+    secure: $GITHUB_AUTH
+  file_glob: true
+  file:
+    - ./deploy/windows/*.exe
+	- ./deploy/android/build/*.apk
+	- ./deploy/linux.tar.gz
+  skip_cleanup: true
+  on:
+    branch: release
+	tag: true
